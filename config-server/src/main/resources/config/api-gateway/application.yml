@@ -1,0 +1,46 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: api-gateway
+  cloud:
+    gateway:
+      globalcors:
+        cors-configurations:
+          "[/**]":
+            allowedMethods:
+              - GET
+              - POST
+              - PUT
+              - DELETE
+              - OPTIONS
+            allowedHeaders: "*"
+            allowCredentials: true
+            maxAge: 3600
+      discovery:
+        locator: false
+      routes:
+        # User Service
+        - id: user-service
+          uri: lb://user-service
+          predicates:
+            - Path=/api/auth/**,/api/users/**
+          filters:
+            - RemoveRequestHeader=X-User-Id
+            - StripPrefix=1
+            # - name: JwtHeaderFilter
+        # Payment Service
+        - id: payment-service
+          uri: lb://payment-service
+          predicates:
+              - Path=/api/currencies/**,/api/operations/**,/api/pairs/**,/api/transactions/**,/api/wallets/**
+          filters:
+              - RemoveRequestHeader=X-User-Id
+              - StripPrefix=1
+              - name: JwtHeaderFilter
+    loadbalancer:
+      enabled: true
+
+cors:
+  allowedOrigins: ${ALLOWED_ORIGIN:*}
